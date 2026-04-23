@@ -1,6 +1,11 @@
 # AutoFill JP Chrome Web Store 文面
 
-公開前に `docs/index.html` のサポート連絡先プレースホルダーを実運用値へ差し替えてください。
+公開用 URL
+
+- Homepage URL: `https://shota-0712.github.io/autofill-jp/`
+- Support URL: `https://shota-0712.github.io/autofill-jp/#support`
+- Privacy policy URL: `https://shota-0712.github.io/autofill-jp/privacy.html`
+- Support email: `satellite0712@gmail.com`
 
 ## Single Purpose
 
@@ -65,6 +70,9 @@ AutoFill JP は、日本の就活・適性検査・各種応募フォーム向�
 
 - 製品概要ページ: `docs/index.html`
 - プライバシーポリシー: `docs/privacy.html`
+- Homepage URL: `https://shota-0712.github.io/autofill-jp/`
+- Support URL: `https://shota-0712.github.io/autofill-jp/#support`
+- Privacy policy URL: `https://shota-0712.github.io/autofill-jp/privacy.html`
 - Single Purpose: 「フォーム入力内容の学習と再利用」
 - Password / hidden 非対象を Listing / Privacy / README で統一
 - ローカル保存中心、外部送信なしを Listing / Privacy / README で統一
