@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "AutoFill JP",
+  "version": "0.2.1",
+  "description": "日本の就活・適性検査・各種フォームを、入力内容から学習して自動入力するツール",
+
+  "permissions": [
+    "storage",
+    "contextMenus"
+  ],
+
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "AutoFill JP",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+
+  "options_page": "options/options.html",
+
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content/content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

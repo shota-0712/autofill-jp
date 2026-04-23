@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>AutoFill JP - 設定</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <h1>AutoFill JP</h1>
+        <span class="tag">ルール管理</span>
+      </div>
+      <div class="header-actions">
+        <button id="add-rule" class="btn-add">＋ ルールを追加</button>
+        <button id="export" class="btn-ghost">エクスポート</button>
+        <button id="import" class="btn-ghost">インポート</button>
+        <input type="file" id="import-file" accept=".json" hidden>
+      </div>
+    </div>
+    <div class="header-bar">
+      <div class="search-box">
+        <input type="text" id="search" placeholder="ルールを検索(ラベル・name・値)">
+      </div>
+      <div class="count-info">
+        <span id="total-count">0</span>件のルール
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ヘルプボックス -->
+    <div class="help-box" id="help-box">
+      <div class="help-header">
+        <strong>💡 使い方</strong>
+        <button id="toggle-help">隠す</button>
+      </div>
+      <div class="help-content">
+        <h3>基本的な流れ</h3>
+        <ol>
+          <li>就活サイトなどのフォームを開き、<strong>手で必要項目を入力</strong>する</li>
+          <li>右下の「📝 入力内容を学習」ボタンを押すと、今入力した項目が全部ルール候補として出てくる</li>
+          <li>保存したい項目だけチェックして「保存」→ 次回から自動入力できる</li>
+        </ol>
+        <h3>ルールの書き方</h3>
+        <ul>
+          <li><code>"name1"</code> - ダブルクォート囲み = 正規化した name / id に完全一致</li>
+          <li><code>name1</code> - 裸文字列 = 同じく完全一致</li>
+          <li><code>/^kname\d$/i</code> - スラッシュ囲み = name / id に対する正規表現</li>
+        </ul>
+        <h3>サイト指定</h3>
+        <ul>
+          <li>サイト欄が<strong>空 = 全サイトに適用</strong>(デフォルト)</li>
+          <li><code>example.com</code> はそのホストとサブドメインで動作</li>
+          <li><code>https://example.com/form/</code> はその URL プレフィックスでのみ動作</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ルール一覧テーブル -->
+    <p class="rules-scope-note">
+      サイト欄を空欄にするとルールは全サイトに適用されます。特定ページだけに限定したい場合は
+      <code>example.com</code> または <code>https://example.com/form/</code> を指定してください。
+    </p>
+    <div class="rules-table-wrap">
+      <table class="rules-table">
+        <thead>
+          <tr>
+            <th class="col-type">種別</th>
+            <th class="col-label">ラベル(メモ)</th>
+            <th class="col-name">name</th>
+            <th class="col-value">値</th>
+            <th class="col-site">サイト(空欄=全サイトに適用)</th>
+            <th class="col-action"></th>
+          </tr>
+        </thead>
+        <tbody id="rules-body">
+          <!-- JSで生成 -->
+        </tbody>
+      </table>
+      <div class="empty-state" id="empty-state">
+        <p style="font-size:16px; color:#7f8c8d; margin-bottom:8px;">ルールはまだありません</p>
+        <p style="font-size:13px; color:#95a5a6;">
+          就活サイトなどのフォームに手で入力した後、ページ右下の<br>
+          「📝 入力内容を学習」ボタンから一括登録できます。
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <!-- 設定セクション -->
+  <section class="settings-section">
+    <h2>動作設定</h2>
+    <label class="setting-row">
+      <input type="checkbox" id="hide-fab">
+      <span>ページ右下のフローティングボタンを隠す</span>
+    </label>
+    <div class="danger-zone">
+      <button id="reset" class="btn-danger">⚠️ すべてのルールを削除</button>
+    </div>
+  </section>
+
+  <script src="options.js"></script>
+</body>
+</html>

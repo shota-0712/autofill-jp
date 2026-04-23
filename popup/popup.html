@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>AutoFill JP</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 300px;
+      font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      font-size: 13px; color: #2c3e50; background: #f8f9fa;
+    }
+    header {
+      padding: 14px 16px; background: linear-gradient(135deg, #2e75b6 0%, #1e3a5f 100%);
+      color: white;
+    }
+    h1 { font-size: 15px; font-weight: 700; }
+    .count { font-size: 11px; opacity: 0.85; margin-top: 2px; }
+
+    main { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+
+    button {
+      width: 100%; padding: 11px 14px; border: none; border-radius: 6px;
+      font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+      transition: transform 0.1s, box-shadow 0.15s;
+    }
+    button:hover { transform: translateY(-1px); }
+
+    .btn-primary { background: linear-gradient(135deg, #2e75b6, #1e5a94); color: white; }
+    .btn-learn { background: linear-gradient(135deg, #27ae60, #1e8449); color: white; }
+    .btn-secondary { background: white; color: #34495e; border: 1px solid #dce4ec; }
+
+    .status {
+      padding: 8px 12px; background: white; border-left: 3px solid #3498db;
+      font-size: 12px; color: #555; min-height: 16px; display: none;
+    }
+    .status.visible { display: block; }
+    .status.success { border-color: #27ae60; color: #1e8449; }
+    .status.error { border-color: #e74c3c; color: #c0392b; }
+
+    footer {
+      padding: 10px 16px; border-top: 1px solid #e1e8ed; background: white;
+      text-align: center;
+    }
+    footer a {
+      color: #2e75b6; text-decoration: none; font-size: 12px;
+    }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AutoFill JP</h1>
+    <div class="count" id="count">ルール: 読み込み中...</div>
+  </header>
+  <main>
+    <button id="fill" class="btn-primary">🪄 このページを自動入力</button>
+    <button id="learn" class="btn-learn">📝 入力内容を学習</button>
+    <div class="status" id="status"></div>
+  </main>
+  <footer>
+    <a href="#" id="opts">⚙️ 設定・ルール編集</a>
+  </footer>
+  <script src="popup.js"></script>
+</body>
+</html>

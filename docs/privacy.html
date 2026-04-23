@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoFill JP | プライバシーポリシー</title>
+  <meta name="description" content="AutoFill JP のプライバシーポリシーと Chrome Web Store Limited Use 開示です。">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell nav">
+      <div class="brand">AutoFill JP</div>
+      <nav class="nav-links" aria-label="グローバルナビゲーション">
+        <a href="./index.html">製品概要</a>
+        <a href="#limited-use">Limited Use</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <article class="hero-copy">
+        <p class="eyebrow">Privacy Policy</p>
+        <h1>AutoFill JP プライバシーポリシー</h1>
+        <p class="lead">
+          本ポリシーは、AutoFill JP がどのデータを処理し、どこに保存し、何に使わないかを説明するものです。
+          最終更新日は 2026-04-23 です。
+        </p>
+        <div class="hero-actions">
+          <a class="button-link primary" href="./index.html">製品概要へ戻る</a>
+          <a class="button-link secondary" href="#limited-use">Limited Use を読む</a>
+        </div>
+      </article>
+
+      <aside class="hero-panel">
+        <p class="eyebrow">Summary</p>
+        <ul>
+          <li>ルール本体はブラウザ内の <code>chrome.storage.local</code> に保存します。</li>
+          <li>password / hidden フィールドは学習も自動入力もしません。</li>
+          <li>入力データを外部サーバーへ送信しません。</li>
+          <li>広告、データ販売、第三者提供、トラッキング目的の利用は行いません。</li>
+        </ul>
+      </aside>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <p class="eyebrow">1. 取得・処理する情報</p>
+        <h2>ユーザーが明示的に入力したフォーム情報</h2>
+        <p>AutoFill JP は、ユーザーが対象ページで入力した通常フィールドの値と、その値に対応するフィールド識別子を処理します。</p>
+        <ul class="check-list">
+          <li>例: 氏名、住所、電話番号、学校名、メールアドレスなど、ユーザーが自分で入力した値</li>
+          <li>フィールド識別子: <code>name</code>、<code>id</code>、ルールのサイト指定、ラベルメモ</li>
+          <li>軽微な設定: フローティングボタン表示設定など</li>
+        </ul>
+      </article>
+
+      <article class="card caution">
+        <p class="eyebrow">2. 取り扱わない情報</p>
+        <h2>保存も入力もしないもの</h2>
+        <ul class="check-list">
+          <li>パスワード欄 (<code>type="password"</code>)</li>
+          <li>hidden フィールド (<code>type="hidden"</code>)</li>
+          <li>ページ本文全体、閲覧履歴、広告識別子、分析用イベント</li>
+          <li>第三者サービスへ送るための利用ログやトラッキングデータ</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="split">
+      <article class="card">
+        <p class="eyebrow">3. 保存場所と保持</p>
+        <h2>ブラウザ内保存が基本です</h2>
+        <ul class="stack-list">
+          <li>学習ルール本体は <code>chrome.storage.local</code> に保存します。</li>
+          <li>軽微な設定は <code>chrome.storage.sync</code> を使う場合があります。</li>
+          <li>ユーザーは拡張機能の設定画面からルールの編集・削除・エクスポート・インポートを行えます。</li>
+          <li>拡張機能側で保存期間を自動延長したり、外部バックアップへ複製したりすることはありません。</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <p class="eyebrow">4. 利用目的</p>
+        <h2>単一目的のためだけに使います</h2>
+        <p>処理したデータは、ユーザーが訪れたフォームに対して自動入力を行うためだけに使います。</p>
+        <ul class="stack-list">
+          <li>広告表示、広告測定、ユーザープロファイリングには使いません。</li>
+          <li>データ販売や第三者提供には使いません。</li>
+          <li>AI 学習、データブローカー、外部分析基盤への転用はしません。</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="banner" id="limited-use">
+      <p class="eyebrow">Chrome Web Store Limited Use</p>
+      <h2>Limited Use 開示</h2>
+      <p>
+        AutoFill JP は、Chrome Web Store Developer Program Policies の Limited Use 要件に従い、
+        ユーザーデータをユーザーが明示的に要求した自動入力機能の提供にのみ使用します。
+      </p>
+      <ul class="check-list">
+        <li>取得したデータを第三者へ販売しません。</li>
+        <li>広告配信、クレジット評価、データブローカー、人物属性推定に利用しません。</li>
+        <li>人の閲覧を伴うのは、法令遵守、セキュリティ、サポート対応など限定的な場合に限ります。現行版では外部送信自体を行いません。</li>
+        <li>ユーザーがフォーム上で明示的に利用した範囲を超えてデータを転用しません。</li>
+      </ul>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <p class="eyebrow">5. 送信・共有</p>
+        <h2>外部送信しません</h2>
+        <p>現行バージョンの AutoFill JP は、学習ルールや入力データを開発者サーバー、解析基盤、広告サービス、第三者 API へ送信しません。</p>
+      </article>
+
+      <article class="card">
+        <p class="eyebrow">6. 問い合わせ</p>
+        <h2>サポート窓口</h2>
+        <p>サポート窓口は <a href="./index.html#support">製品概要ページの Support セクション</a> に掲載します。公開前に実運用の連絡先へ差し替えてください。</p>
+      </article>
+    </section>
+  </main>
+
+  <footer class="shell site-footer">
+    <p>このポリシーは、機能追加やデータフロー変更に応じて更新されます。変更後はこのページで最新版を公開します。</p>
+  </footer>
+</body>
+</html>
