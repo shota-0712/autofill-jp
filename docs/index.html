@@ -25,37 +25,20 @@
     <section class="s-hero">
       <div class="shell">
         <div class="hero">
-          <div class="hero-copy">
-            <p class="eyebrow">Chrome Extension</p>
-            <h1>手入力した内容を、次のフォームでも使い回せるようにする。</h1>
-            <p class="lead">
-              名前・住所・学校名など、フォームで毎回入力する情報を一度学習させるだけ。次からは自動で入力されます。
-            </p>
-            <div class="hero-actions">
-              <a class="btn primary" href="./privacy.html">プライバシーポリシー</a>
-              <a class="btn secondary" href="#support">サポート</a>
-            </div>
+          <p class="eyebrow">Chrome Extension</p>
+          <h1>手入力した内容を、次のフォームでも使い回せるようにする。</h1>
+          <p class="lead">
+            名前・住所・学校名など、フォームで毎回入力する情報を一度学習させるだけ。次からは自動で入力されます。
+          </p>
+          <div class="hero-actions">
+            <a class="btn primary" href="./privacy.html">プライバシーポリシー</a>
+            <a class="btn secondary" href="#support">サポート</a>
           </div>
-          <div class="hero-panel">
-            <p class="eyebrow">安心ポイント</p>
-            <div class="feat-grid">
-              <div class="feat">
-                <p class="feat-title">Chrome内にだけ保存</p>
-                <p class="feat-desc">データが外に出ることはありません</p>
-              </div>
-              <div class="feat">
-                <p class="feat-title">パスワードは保存しない</p>
-                <p class="feat-desc">パスワード欄は対象外です</p>
-              </div>
-              <div class="feat">
-                <p class="feat-title">どのフォームでも使える</p>
-                <p class="feat-desc">就活・申込・登録など幅広く対応</p>
-              </div>
-              <div class="feat">
-                <p class="feat-title">広告・データ販売なし</p>
-                <p class="feat-desc">入力情報を第三者に渡しません</p>
-              </div>
-            </div>
+          <div class="hero-points">
+            <div class="hero-point"><strong>Chrome内にだけ保存</strong><span>データが外に出ることはありません</span></div>
+            <div class="hero-point"><strong>パスワードは保存しない</strong><span>パスワード欄は対象外です</span></div>
+            <div class="hero-point"><strong>どのフォームでも使える</strong><span>就活・申込・登録など幅広く対応</span></div>
+            <div class="hero-point"><strong>広告・データ販売なし</strong><span>入力情報を第三者に渡しません</span></div>
           </div>
         </div>
       </div>
@@ -66,11 +49,25 @@
       <div class="shell">
         <p class="eyebrow">使い方</p>
         <h2>3ステップで完了します。</h2>
-        <p style="max-width: 42rem;">難しい設定は不要です。フォームに入力したあと「学習」するだけで、次回から自動で入力されます。</p>
-        <div class="pill-row">
-          <span class="pill">① フォームに入力する</span>
-          <span class="pill">② 右クリック →「このページの入力内容を学習」</span>
-          <span class="pill">③ 次回は「自動入力を実行」で一括入力</span>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <h3>フォームに入力する</h3>
+            <p>いつも通りフォームを入力します。ページ右下にボタンが表示されます。</p>
+            <img src="ss-autofill.jpg" alt="フォームに自動入力ボタンが表示されている画面">
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <h3>「入力内容を学習」で保存する</h3>
+            <p>保存したい項目を選んで保存するだけ。次回から使い回せます。</p>
+            <img src="ss-learn.jpg" alt="入力内容を学習するモーダル画面">
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <h3>次回は「自動入力」で完了</h3>
+            <p>「自動入力を実行」を押すと、前回の入力内容がまとめて入力されます。</p>
+            <img src="ss-result.jpg" alt="自動入力が完了したフォーム画面">
+          </div>
         </div>
       </div>
     </section>
@@ -90,22 +87,14 @@
             </ul>
           </article>
           <article class="card">
-            <p class="eyebrow">権限について</p>
-            <h2>なぜこの権限が必要なのか。</h2>
-            <div class="meta">
-              <div class="meta-block">
-                <span class="meta-label">ストレージ</span>
-                <p>学習した入力ルールをブラウザ内に保存するために使います。</p>
-              </div>
-              <div class="meta-block">
-                <span class="meta-label">右クリックメニュー</span>
-                <p>「自動入力を実行」「入力内容を学習」を右クリックから呼び出すために使います。</p>
-              </div>
-              <div class="meta-block">
-                <span class="meta-label">すべてのサイトへのアクセス</span>
-                <p>就活サイトや申込フォームはサイトごとに構造が異なるため、どのサイトでも同じように使えるようにするために必要です。</p>
-              </div>
-            </div>
+            <p class="eyebrow">主な機能</p>
+            <h2>サイトをまたいで使い回せます。</h2>
+            <ul class="stack-list">
+              <li>学習したルールはどのサイトでも使えます。就活サイト・各種申込フォームなど、サイトごとに設定し直す必要はありません。</li>
+              <li>サイトを指定して「このサイトだけ」に絞ることもできます。</li>
+              <li>設定画面でルールの追加・編集・削除が自由にできます。</li>
+              <li>エクスポート・インポートで別のPCに設定を移せます。</li>
+            </ul>
           </article>
         </div>
       </div>
