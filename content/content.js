@@ -130,20 +130,20 @@
       .ajp-btn:focus-visible,
       .ajp-field:focus-visible,
       .ajp-check:focus-visible {
-        outline: 2px solid #2563eb;
+        outline: 2px solid #0066cc;
         outline-offset: 2px;
       }
 
       .ajp-btn-primary {
-        background: linear-gradient(135deg, #2e75b6 0%, #1d4f7b 100%);
+        background: #1d1d1f;
         color: white;
-        box-shadow: 0 10px 24px rgba(30, 58, 95, 0.24);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
       }
 
       .ajp-btn-success {
-        background: linear-gradient(135deg, #27ae60 0%, #1b8a4a 100%);
+        background: #0066cc;
         color: white;
-        box-shadow: 0 10px 24px rgba(39, 174, 96, 0.24);
+        box-shadow: 0 8px 20px rgba(0, 102, 204, 0.28);
       }
 
       .ajp-btn-secondary {
