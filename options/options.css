@@ -26,6 +26,7 @@ header {
   justify-content: space-between;
   align-items: center;
   gap: 20px;
+  flex-wrap: wrap;
   padding-bottom: 16px;
 }
 
@@ -37,12 +38,13 @@ header {
 .brand h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.01em; }
 .brand .tag { font-size: 12px; opacity: 0.7; }
 
-.header-actions { display: flex; gap: 8px; }
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 
 .btn-add {
   padding: 9px 18px; background: #f39c12; color: white; border: none;
   border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;
   box-shadow: 0 2px 6px rgba(243, 156, 18, 0.3);
+  white-space: nowrap;
 }
 .btn-add:hover { background: #e67e22; }
 
@@ -50,6 +52,7 @@ header {
   padding: 9px 14px; background: rgba(255,255,255,0.12); color: white;
   border: 1px solid rgba(255,255,255,0.3); border-radius: 6px;
   font-size: 12px; cursor: pointer;
+  white-space: nowrap;
 }
 .btn-ghost:hover { background: rgba(255,255,255,0.2); }
 
@@ -67,7 +70,35 @@ header {
 }
 .search-box input:focus { outline: 2px solid #f39c12; }
 
-.count-info { font-size: 13px; opacity: 0.9; }
+.count-info { font-size: 13px; opacity: 0.9; white-space: nowrap; }
+
+.save-status {
+  min-width: 72px;
+  padding: 4px 9px;
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.9);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.save-status.saving {
+  background: rgba(243,156,18,0.22);
+  border-color: rgba(243,156,18,0.45);
+}
+
+.save-status.saved {
+  background: rgba(39,174,96,0.2);
+  border-color: rgba(39,174,96,0.42);
+}
+
+.save-status.error {
+  background: rgba(231,76,60,0.28);
+  border-color: rgba(231,76,60,0.5);
+}
 
 /* ===== Main ===== */
 main {
@@ -123,12 +154,12 @@ main {
 
 /* ===== Rules Table ===== */
 .rules-table-wrap {
-  background: white; border-radius: 10px; overflow: hidden;
+  background: white; border-radius: 10px; overflow-x: auto;
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 
 .rules-table {
-  width: 100%; border-collapse: collapse;
+  width: 100%; min-width: 920px; border-collapse: collapse;
 }
 
 .rules-table thead {
@@ -201,5 +232,139 @@ main {
 }
 .btn-danger:hover { background: #c0392b; }
 
+/* ===== Dialog ===== */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.dialog {
+  width: min(460px, 100%);
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22);
+  overflow: hidden;
+}
+
+.dialog-body {
+  padding: 20px 22px 18px;
+}
+
+.dialog-body h2 {
+  margin: 0 0 8px;
+  color: #1e3a5f;
+  font-size: 18px;
+}
+
+.dialog-body p {
+  margin: 0;
+  color: #52606d;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 18px 18px;
+  border-top: 1px solid #e1e8ed;
+  background: #f8fafc;
+}
+
+.dialog-actions button {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #34495e;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dialog-actions .primary {
+  border-color: #2e75b6;
+  background: #2e75b6;
+  color: white;
+}
+
+.dialog-actions .danger {
+  border-color: #e74c3c;
+  background: #e74c3c;
+  color: white;
+}
+
 /* Hidden */
 [hidden] { display: none !important; }
+
+@media (max-width: 760px) {
+  header {
+    padding: 16px 16px 0;
+  }
+
+  .header-inner,
+  .header-bar {
+    gap: 12px;
+  }
+
+  .brand {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .header-actions button {
+    flex: 1 1 120px;
+  }
+
+  .header-bar {
+    flex-wrap: wrap;
+  }
+
+  .search-box {
+    flex-basis: 100%;
+  }
+
+  main,
+  .settings-section {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 520px) {
+  .brand {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .header-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .btn-add {
+    grid-column: 1 / -1;
+  }
+
+  .dialog-actions {
+    flex-direction: column-reverse;
+  }
+
+  .dialog-actions button {
+    width: 100%;
+  }
+}

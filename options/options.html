@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AutoFill JP - 設定</title>
   <link rel="stylesheet" href="options.css">
 </head>
@@ -21,11 +22,12 @@
     </div>
     <div class="header-bar">
       <div class="search-box">
-        <input type="text" id="search" placeholder="ルールを検索(ラベル・name・値)">
+        <input type="text" id="search" placeholder="ルールを検索(ラベル・name・値・サイト)">
       </div>
       <div class="count-info">
         <span id="total-count">0</span>件のルール
       </div>
+      <div class="save-status" id="save-status" aria-live="polite">保存済み</div>
     </div>
   </header>
 
@@ -41,7 +43,7 @@
         <ol>
           <li>就活サイトなどのフォームを開き、<strong>手で必要項目を入力</strong>する</li>
           <li>右下の「📝 入力内容を学習」ボタンを押すと、今入力した項目が全部ルール候補として出てくる</li>
-          <li>保存したい項目だけチェックして「保存」→ 次回から自動入力できる</li>
+          <li>保存したい項目と使う範囲を選んで「保存」→ 次回から自動入力できる</li>
         </ol>
         <h3>ルールの書き方</h3>
         <ul>
@@ -51,7 +53,7 @@
         </ul>
         <h3>サイト指定</h3>
         <ul>
-          <li>サイト欄が<strong>空 = 全サイトに適用</strong>(デフォルト)</li>
+          <li>サイト欄が<strong>空 = 全サイトに適用</strong></li>
           <li><code>example.com</code> はそのホストとサブドメインで動作</li>
           <li><code>https://example.com/form/</code> はその URL プレフィックスでのみ動作</li>
         </ul>

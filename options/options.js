@@ -6,6 +6,8 @@ let state = {
   searchQuery: ''
 };
 
+let saveStatusTimer = null;
+
 const RULE_TYPE_OPTIONS = [
   { value: '', label: '自動' },
   { value: 'text', label: 'テキスト' },
@@ -64,11 +66,45 @@ async function loadData() {
 }
 
 async function saveRules() {
-  await saveRulesToStorage(state.rules);
+  setSaveStatus('saving', '保存中');
+  try {
+    await saveRulesToStorage(state.rules);
+    setSaveStatus('saved', '保存済み');
+    return true;
+  } catch (error) {
+    console.error('[AutoFill JP] Failed to save rules', error);
+    setSaveStatus('error', '保存失敗');
+    return false;
+  }
 }
 
 async function saveSettings() {
-  await chrome.storage.sync.set({ settings: state.settings });
+  setSaveStatus('saving', '保存中');
+  try {
+    await chrome.storage.sync.set({ settings: state.settings });
+    setSaveStatus('saved', '保存済み');
+    return true;
+  } catch (error) {
+    console.error('[AutoFill JP] Failed to save settings', error);
+    setSaveStatus('error', '保存失敗');
+    return false;
+  }
+}
+
+function setSaveStatus(type, message) {
+  const el = document.getElementById('save-status');
+  if (!el) return;
+
+  clearTimeout(saveStatusTimer);
+  el.textContent = message;
+  el.className = `save-status ${type}`;
+
+  if (type === 'saved') {
+    saveStatusTimer = setTimeout(() => {
+      el.textContent = '保存済み';
+      el.className = 'save-status saved';
+    }, 1500);
+  }
 }
 
 // ========== Render ==========
@@ -84,7 +120,8 @@ function render() {
     ? state.rules.filter(r =>
         (r.label || '').toLowerCase().includes(q) ||
         (r.name || '').toLowerCase().includes(q) ||
-        (String(r.value) || '').toLowerCase().includes(q))
+        (String(r.value) || '').toLowerCase().includes(q) ||
+        (r.site || '').toLowerCase().includes(q))
     : state.rules;
 
   countEl.textContent = state.rules.length;
@@ -166,6 +203,75 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+function showChoiceDialog({ title, message, actions }) {
+  return new Promise((resolve) => {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'dialog-backdrop';
+    backdrop.setAttribute('role', 'dialog');
+    backdrop.setAttribute('aria-modal', 'true');
+
+    const dialog = document.createElement('div');
+    dialog.className = 'dialog';
+
+    const body = document.createElement('div');
+    body.className = 'dialog-body';
+
+    const heading = document.createElement('h2');
+    heading.textContent = title;
+
+    const text = document.createElement('p');
+    text.textContent = message;
+
+    const footer = document.createElement('div');
+    footer.className = 'dialog-actions';
+
+    const close = (value) => {
+      document.removeEventListener('keydown', onKeydown, true);
+      backdrop.remove();
+      resolve(value);
+    };
+
+    const onKeydown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        close(null);
+      }
+    };
+
+    actions.forEach((action) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = action.label;
+      if (action.kind) button.className = action.kind;
+      button.addEventListener('click', () => close(action.value));
+      footer.appendChild(button);
+    });
+
+    body.appendChild(heading);
+    body.appendChild(text);
+    dialog.appendChild(body);
+    dialog.appendChild(footer);
+    backdrop.appendChild(dialog);
+    document.body.appendChild(backdrop);
+    document.addEventListener('keydown', onKeydown, true);
+
+    const primary = footer.querySelector('.primary') || footer.querySelector('button');
+    primary?.focus();
+  });
+}
+
+function chooseImportMode(ruleCount) {
+  return showChoiceDialog({
+    title: 'ルールをインポート',
+    message: `${ruleCount}件のルールが含まれています。既存ルールに追加するか、現在のルールを置き換えるかを選んでください。`,
+    actions: [
+      { label: '中止', value: null },
+      { label: '上書き', value: 'replace', kind: 'danger' },
+      { label: '追加', value: 'merge', kind: 'primary' }
+    ]
+  });
+}
+
 // ========== Actions ==========
 document.getElementById('add-rule').addEventListener('click', () => {
   state.rules.push({
@@ -220,27 +326,43 @@ document.getElementById('import-file').addEventListener('change', async (e) => {
     const data = JSON.parse(text);
     if (!Array.isArray(data.rules)) {
       alert('ファイル形式が不正です');
+      e.target.value = '';
       return;
     }
-    const mode = confirm(`${data.rules.length}件のルールが含まれています。\n\nOK = 既存ルールに追加(マージ)\nキャンセル = 現在のルールを上書き`);
-    if (mode) {
+    const mode = await chooseImportMode(data.rules.length);
+    if (!mode) {
+      e.target.value = '';
+      return;
+    }
+
+    if (mode === 'merge') {
       // マージ: 同じnameのルールは上書き、なければ追加
       for (const newRule of data.rules) {
         const normalizedType = normalizeRuleType(newRule.type);
-        const idx = state.rules.findIndex(r => r.name === newRule.name && normalizeRuleType(r.type) === normalizedType);
+        const normalizedSite = String(newRule.site ?? '').trim();
+        const idx = state.rules.findIndex(r =>
+          r.name === newRule.name &&
+          normalizeRuleType(r.type) === normalizedType &&
+          String(r.site ?? '').trim() === normalizedSite
+        );
         if (idx >= 0) {
           state.rules[idx] = { ...state.rules[idx], ...newRule, type: normalizedType };
         } else {
           state.rules.push({ ...newRule, type: normalizedType });
         }
       }
-    } else {
+    } else if (mode === 'replace') {
       state.rules = data.rules.map(rule => ({
         ...rule,
         type: normalizeRuleType(rule.type)
       }));
     }
-    await saveRules();
+    const saved = await saveRules();
+    if (!saved) {
+      alert('インポート内容の保存に失敗しました');
+      e.target.value = '';
+      return;
+    }
     render();
     alert(`インポート完了: ${state.rules.length}件のルールが登録されています`);
   } catch (err) {
@@ -253,8 +375,9 @@ document.getElementById('reset').addEventListener('click', async () => {
   if (!confirm('本当にすべてのルールを削除しますか?')) return;
   if (!confirm('最終確認: 元に戻せません。本当に削除しますか?')) return;
   state.rules = [];
-  await saveRules();
-  render();
+  if (await saveRules()) {
+    render();
+  }
 });
 
 // Help toggle
@@ -276,4 +399,5 @@ document.getElementById('hide-fab').addEventListener('change', async (e) => {
   await loadData();
   render();
   document.getElementById('hide-fab').checked = !!state.settings.hideFloatingButton;
+  setSaveStatus('saved', '保存済み');
 })();

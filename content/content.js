@@ -36,6 +36,8 @@
 
   let uiRoot = null;
   let modalKeyHandler = null;
+  let fabInjectionTimer = null;
+  let floatingButtonObserver = null;
 
   function wait(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -280,6 +282,67 @@
         color: #7c2d12;
       }
 
+      .ajp-scope-panel {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+        padding: 14px;
+        border: 1px solid #dbeafe;
+        border-radius: 16px;
+        background: #eff6ff;
+      }
+
+      .ajp-scope-title {
+        margin: 0;
+        color: #1e3a8a;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .ajp-scope-options {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .ajp-scope-option {
+        display: grid;
+        grid-template-columns: 18px minmax(0, 1fr);
+        gap: 8px;
+        align-items: start;
+        padding: 10px 12px;
+        border: 1px solid #bfdbfe;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.82);
+        color: #1e293b;
+        cursor: pointer;
+      }
+
+      .ajp-scope-option:has(input:checked) {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+      }
+
+      .ajp-scope-option input {
+        margin-top: 2px;
+        accent-color: #2563eb;
+      }
+
+      .ajp-scope-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .ajp-scope-value {
+        display: block;
+        margin-top: 2px;
+        color: #475569;
+        font-size: 11px;
+        line-height: 1.4;
+        word-break: break-all;
+      }
+
       .ajp-modal-toolbar {
         display: flex;
         flex-wrap: wrap;
@@ -366,6 +429,10 @@
       @media (max-width: 920px) {
         .ajp-capture-row {
           grid-template-columns: 28px minmax(0, 1fr);
+        }
+
+        .ajp-scope-options {
+          grid-template-columns: 1fr;
         }
 
         .ajp-row-name,
@@ -625,6 +692,69 @@
 
     const currentHost = normalizeHostMatchText(location.hostname);
     return currentHost === ruleHost || currentHost.endsWith(`.${ruleHost}`);
+  }
+
+  function getCurrentHostRuleSite() {
+    return normalizeHostMatchText(location.hostname);
+  }
+
+  function getCurrentUrlRuleSite() {
+    return normalizeUrlPrefix(location.href);
+  }
+
+  function getDefaultCaptureScope() {
+    return getCurrentHostRuleSite() ? 'host' : 'global';
+  }
+
+  function getRuleSiteForScope(scope) {
+    if (scope === 'host') return getCurrentHostRuleSite();
+    if (scope === 'url') return getCurrentUrlRuleSite();
+    return '';
+  }
+
+  function getRuleSiteRank(site) {
+    const rawSite = String(site ?? '').trim();
+    if (!rawSite) return { level: 0, length: 0 };
+
+    const absolutePrefix = normalizeUrlPrefix(rawSite);
+    if (absolutePrefix) return { level: 3, length: absolutePrefix.length };
+
+    const schemelessPrefix = normalizeUrlPrefixWithoutScheme(rawSite);
+    if (schemelessPrefix) return { level: 3, length: schemelessPrefix.length };
+
+    const host = normalizeHostMatchText(rawSite);
+    if (!host) return { level: 0, length: 0 };
+
+    return { level: 2, length: host.length };
+  }
+
+  function getRuleNameRank(rule) {
+    const name = String(rule?.name ?? '').trim();
+    if (!name) return 0;
+    if (/^\/(.+)\/([gimsu]*)$/.test(name)) return 1;
+    return 2;
+  }
+
+  function sortRulesForAutofill(rules) {
+    return rules
+      .map((rule, index) => ({ rule, index }))
+      .sort((a, b) => {
+        const aSite = getRuleSiteRank(a.rule.site);
+        const bSite = getRuleSiteRank(b.rule.site);
+        if (aSite.level !== bSite.level) return bSite.level - aSite.level;
+        if (aSite.length !== bSite.length) return bSite.length - aSite.length;
+
+        const aName = getRuleNameRank(a.rule);
+        const bName = getRuleNameRank(b.rule);
+        if (aName !== bName) return bName - aName;
+
+        const aType = normalizeRuleType(a.rule.type) ? 1 : 0;
+        const bType = normalizeRuleType(b.rule.type) ? 1 : 0;
+        if (aType !== bType) return bType - aType;
+
+        return a.index - b.index;
+      })
+      .map((entry) => entry.rule);
   }
 
   function normalizeLooseText(value) {
@@ -1067,6 +1197,22 @@
     element.click();
   }
 
+  function isAffirmativeCheckboxValue(value) {
+    return ['1', 'true', 'yes', 'on', 'checked', 'check', 'はい', 'あり'].includes(normalizeMatchText(value));
+  }
+
+  function isSingleCheckboxInGroup(element) {
+    if (element.type !== 'checkbox') return false;
+    if (!element.name) return true;
+
+    try {
+      const group = Array.from(document.querySelectorAll(`input[type="checkbox"][name="${CSS.escape(element.name)}"]`));
+      return group.length <= 1;
+    } catch (error) {
+      return true;
+    }
+  }
+
   async function tryDropdownLikeValue(element, value) {
     if (!isDropdownLikeElement(element)) return false;
 
@@ -1121,13 +1267,18 @@
       return applySelectValue(element, value);
     }
 
-    if (type === 'radio' || type === 'checkbox') {
-      if (
-        String(element.value) === String(value) ||
-        String(element.value).trim() === String(value).trim() ||
-        value === '1' ||
-        value === 1
-      ) {
+    if (type === 'radio') {
+      if (valueEquals(value, element.value)) {
+        if (!element.checked) {
+          element.click();
+        }
+        return true;
+      }
+      return false;
+    }
+
+    if (type === 'checkbox') {
+      if (valueEquals(value, element.value) || (isSingleCheckboxInGroup(element) && isAffirmativeCheckboxValue(value))) {
         if (!element.checked) {
           element.click();
         }
@@ -1152,7 +1303,7 @@
         return { filled: 0 };
       }
 
-      const activeRules = rules.filter((rule) => siteRuleMatchesCurrentPage(rule.site));
+      const activeRules = sortRulesForAutofill(rules.filter((rule) => siteRuleMatchesCurrentPage(rule.site)));
 
       const elements = getCandidateElements();
       let filled = 0;
@@ -1429,7 +1580,11 @@
 
   async function injectFloatingButton() {
     const { settings = {} } = await chrome.storage.sync.get('settings');
-    if (settings.hideFloatingButton) return;
+    const { fabLayer } = ensureUiRoot();
+    if (settings.hideFloatingButton) {
+      fabLayer.replaceChildren();
+      return;
+    }
 
     const formElements = getCandidateElements().filter((element) => {
       if (element.tagName === 'INPUT') {
@@ -1440,7 +1595,6 @@
 
     if (formElements.length < 5) return;
 
-    const { fabLayer } = ensureUiRoot();
     if (fabLayer.querySelector('.ajp-fab-wrap')) return;
 
     const wrap = document.createElement('div');
@@ -1453,6 +1607,44 @@
     }));
 
     fabLayer.appendChild(wrap);
+  }
+
+  function scheduleFloatingButtonInjection(delay = 250) {
+    clearTimeout(fabInjectionTimer);
+    fabInjectionTimer = setTimeout(() => {
+      Promise.resolve(injectFloatingButton()).catch((error) => {
+        console.warn('[AutoFill JP] Floating button injection skipped', error);
+      });
+    }, delay);
+  }
+
+  function startFloatingButtonObserver() {
+    if (floatingButtonObserver || !document.documentElement) return;
+
+    floatingButtonObserver = new MutationObserver((mutations) => {
+      const hasRelevantMutation = mutations.some((mutation) => {
+        if (mutation.target instanceof Element && mutation.target.closest(`#${UI_HOST_ID}`)) {
+          return false;
+        }
+
+        return Array.from(mutation.addedNodes).some((node) => {
+          if (!(node instanceof Element)) return false;
+          if (node.id === UI_HOST_ID || node.closest(`#${UI_HOST_ID}`)) return false;
+          return Boolean(node.matches?.('input, select, textarea, form') || node.querySelector?.('input, select, textarea, form'));
+        });
+      });
+
+      if (hasRelevantMutation) {
+        scheduleFloatingButtonInjection();
+      }
+    });
+
+    floatingButtonObserver.observe(document.documentElement, { childList: true, subtree: true });
+  }
+
+  function initFloatingButton() {
+    scheduleFloatingButtonInjection(500);
+    startFloatingButtonObserver();
   }
 
   async function saveCurrentFormAsRules() {
@@ -1469,22 +1661,71 @@
     }
   }
 
-  async function confirmGlobalRuleSaveIfNeeded() {
-    const { settings = {} } = await chrome.storage.sync.get('settings');
-    if (settings.seenGlobalSaveWarning) {
-      return true;
-    }
+  function createScopePanel() {
+    const panel = document.createElement('div');
+    panel.className = 'ajp-scope-panel';
 
-    const accepted = window.confirm(
-      '保存するルールは既定で「全サイトに適用」されます。特定のサイトだけにしたい場合は、保存後に設定画面でサイト欄を指定してください。続行しますか？'
-    );
-    if (!accepted) {
-      return false;
-    }
+    const title = document.createElement('p');
+    title.className = 'ajp-scope-title';
+    title.textContent = '保存したルールを使う範囲';
 
-    settings.seenGlobalSaveWarning = true;
-    await chrome.storage.sync.set({ settings });
-    return true;
+    const options = document.createElement('div');
+    options.className = 'ajp-scope-options';
+
+    const hostSite = getCurrentHostRuleSite();
+    const urlSite = getCurrentUrlRuleSite();
+    const defaultScope = getDefaultCaptureScope();
+    const scopeOptions = [
+      {
+        value: 'host',
+        label: 'このサイトだけ',
+        detail: hostSite || 'このページでは選べません',
+        disabled: !hostSite,
+      },
+      {
+        value: 'url',
+        label: 'このURL配下',
+        detail: urlSite || 'このページでは選べません',
+        disabled: !urlSite,
+      },
+      {
+        value: 'global',
+        label: '全サイト',
+        detail: 'サイト欄を空欄で保存',
+        disabled: false,
+      },
+    ];
+
+    scopeOptions.forEach((option) => {
+      const label = document.createElement('label');
+      label.className = 'ajp-scope-option';
+
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'autofilljp-capture-scope';
+      input.value = option.value;
+      input.checked = option.value === defaultScope;
+      input.disabled = option.disabled;
+
+      const text = document.createElement('span');
+      const labelText = document.createElement('span');
+      labelText.className = 'ajp-scope-label';
+      labelText.textContent = option.label;
+
+      const valueText = document.createElement('span');
+      valueText.className = 'ajp-scope-value';
+      valueText.textContent = option.detail;
+
+      text.appendChild(labelText);
+      text.appendChild(valueText);
+      label.appendChild(input);
+      label.appendChild(text);
+      options.appendChild(label);
+    });
+
+    panel.appendChild(title);
+    panel.appendChild(options);
+    return panel;
   }
 
   function createCaptureRow(item, idx) {
@@ -1577,22 +1818,12 @@
     note.className = 'ajp-modal-note';
     note.textContent = 'ラベルは識別用のメモです。name と value が実際のルールに使われます。';
 
-    const scopeAlert = document.createElement('div');
-    scopeAlert.className = 'ajp-modal-alert';
-
-    const scopeTitle = document.createElement('strong');
-    scopeTitle.textContent = '保存時の既定';
-
-    const scopeBody = document.createElement('span');
-    scopeBody.textContent = 'サイト欄は空欄のまま保存されるため、この画面から保存したルールは全サイトに適用されます。保存後に設定画面で example.com または https://example.com/form/ のように絞り込めます。';
-
-    scopeAlert.appendChild(scopeTitle);
-    scopeAlert.appendChild(scopeBody);
+    const scopePanel = createScopePanel();
 
     desc.appendChild(note);
     header.appendChild(title);
     header.appendChild(desc);
-    header.appendChild(scopeAlert);
+    header.appendChild(scopePanel);
 
     const toolbar = document.createElement('div');
     toolbar.className = 'ajp-modal-toolbar';
@@ -1654,9 +1885,8 @@
         return;
       }
 
-      if (!(await confirmGlobalRuleSaveIfNeeded())) {
-        return;
-      }
+      const scopeInput = modal.querySelector('input[name="autofilljp-capture-scope"]:checked');
+      const site = getRuleSiteForScope(scopeInput?.value || getDefaultCaptureScope());
 
       const rules = await loadRulesFromStorage();
       let addedCount = 0;
@@ -1669,7 +1899,7 @@
           return (
             rule.name === name &&
             normalizeRuleType(rule.type) === type &&
-            String(rule.site ?? '').trim() === ''
+            String(rule.site ?? '').trim() === site
           );
         });
         if (existingIdx >= 0) {
@@ -1678,6 +1908,7 @@
             type,
             value,
             label: label || rules[existingIdx].label || '',
+            site,
           };
           updatedCount++;
           return;
@@ -1689,7 +1920,7 @@
           name,
           value,
           label,
-          site: '',
+          site,
           createdAt: new Date().toISOString(),
         });
         addedCount++;
@@ -1697,7 +1928,8 @@
 
       await saveRulesToStorage(rules);
       closeModal();
-      showToast(`${addedCount}件追加 / ${updatedCount}件更新しました`, 'success');
+      const scopeLabel = site || '全サイト';
+      showToast(`${addedCount}件追加 / ${updatedCount}件更新しました (${scopeLabel})`, 'success');
     });
 
     toolbar.appendChild(selectAllBtn);
@@ -1761,8 +1993,8 @@
   });
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', injectFloatingButton, { once: true });
+    document.addEventListener('DOMContentLoaded', initFloatingButton, { once: true });
   } else {
-    setTimeout(injectFloatingButton, 500);
+    initFloatingButton();
   }
 })();
