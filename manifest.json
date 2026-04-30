@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "AutoFill JP",
   "version": "0.2.1",
-  "description": "日本の就活・適性検査・各種フォームを、入力内容から学習して自動入力するツール",
+  "description": "フォームに入力した内容を学習し、次回以降の入力を自動で再利用できる Chrome 拡張",
 
   "permissions": [
     "storage",

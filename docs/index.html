@@ -4,10 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AutoFill JP | 製品概要とサポート</title>
-  <meta name="description" content="AutoFill JP は、日本の就活フォームを入力内容から学習して再利用する Chrome 拡張機能です。">
+  <meta name="description" content="AutoFill JP は、フォームに入力した内容を学習して次回以降の入力を自動で再利用する Chrome 拡張機能です。">
   <link rel="stylesheet" href="site.css">
 </head>
 <body>
+
   <header class="site-header">
     <div class="shell nav">
       <div class="brand">AutoFill JP</div>
@@ -18,119 +19,134 @@
     </div>
   </header>
 
-  <main class="shell">
-    <section class="hero">
-      <article class="hero-copy">
-        <p class="eyebrow">Chrome Extension / Japan Job Forms</p>
-        <h1>手入力した内容を、次のフォームでも使い回せるようにする。</h1>
-        <p class="lead">
-          AutoFill JP は、日本の就活・適性検査・各種エントリーフォーム向けの学習型自動入力拡張です。
-          ユーザーがページ上で入力した値をローカルに保存し、次回は対応するフィールドへまとめて自動入力します。
-        </p>
-        <div class="hero-actions">
-          <a class="button-link primary" href="./privacy.html">Privacy / Limited Use</a>
-          <a class="button-link secondary" href="#support">Support</a>
+  <main>
+
+    <!-- Hero -->
+    <section class="s-hero">
+      <div class="shell">
+        <div class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow">Chrome Extension</p>
+            <h1>手入力した内容を、次のフォームでも使い回せるようにする。</h1>
+            <p class="lead">
+              名前・住所・学校名など、フォームで毎回入力する情報を一度学習させるだけ。次からは自動で入力されます。
+            </p>
+            <div class="hero-actions">
+              <a class="btn primary" href="./privacy.html">プライバシーポリシー</a>
+              <a class="btn secondary" href="#support">サポート</a>
+            </div>
+          </div>
+          <div class="hero-panel">
+            <p class="eyebrow">安心ポイント</p>
+            <div class="feat-grid">
+              <div class="feat">
+                <p class="feat-title">Chrome内にだけ保存</p>
+                <p class="feat-desc">データが外に出ることはありません</p>
+              </div>
+              <div class="feat">
+                <p class="feat-title">パスワードは保存しない</p>
+                <p class="feat-desc">パスワード欄は対象外です</p>
+              </div>
+              <div class="feat">
+                <p class="feat-title">どのフォームでも使える</p>
+                <p class="feat-desc">就活・申込・登録など幅広く対応</p>
+              </div>
+              <div class="feat">
+                <p class="feat-title">広告・データ販売なし</p>
+                <p class="feat-desc">入力情報を第三者に渡しません</p>
+              </div>
+            </div>
+          </div>
         </div>
-      </article>
-
-      <aside class="hero-panel">
-        <p class="eyebrow">What It Does</p>
-        <ul>
-          <li>フォームに入力済みの通常フィールドをまとめて学習し、次回の入力を短縮します。</li>
-          <li>ルールは <code>{ name, value, site }</code> を基本としてブラウザ内に保存します。</li>
-          <li>学習時に「このサイトだけ」「この URL 配下」「全サイト」を選べます。サイト欄が空欄のルールは全サイトに適用されます。</li>
-          <li>対象はトップフレームの <code>http(s)</code> ページで、パスワード欄と hidden フィールドは扱いません。</li>
-        </ul>
-      </aside>
-    </section>
-
-    <section class="banner">
-      <p class="eyebrow">Single Purpose</p>
-      <h2>目的は、ユーザーが自分で入力したフォーム情報の再利用だけです。</h2>
-      <p>
-        AutoFill JP は、就活サイトや応募フォームで繰り返し入力する氏名、住所、学校名、電話番号などの再入力を減らすために設計されています。
-        収集したデータを広告、分析、トラッキング、販売、第三者提供に使うことはありません。
-      </p>
-      <div class="pill-row" aria-label="主な特性">
-        <span class="pill">Local First</span>
-        <span class="pill">No Remote Code</span>
-        <span class="pill">No Password / Hidden Fields</span>
-        <span class="pill">Top-Frame UI Only</span>
       </div>
     </section>
 
-    <section class="grid">
-      <article class="card kicker">
-        <p class="eyebrow">主な仕様</p>
-        <h2>公開版の挙動</h2>
-        <ul class="check-list">
-          <li><code>Rule.name</code> は、裸文字列と引用付き文字列では正規化した <code>name</code> / <code>id</code> の完全一致です。</li>
-          <li>広い一致は <code>/regex/flags</code> のみ許可しています。</li>
-          <li><code>Rule.site</code> が空欄なら全サイト、非空ならホスト一致または URL プレフィックス一致で評価します。</li>
-          <li>自動入力時は URL プレフィックス、ホスト、全サイトの順に具体的なルールを優先します。</li>
-          <li>既に意味のある値が入っている通常フィールドは原則として上書きしません。</li>
-          <li>FAB、トースト、学習モーダルはトップフレームのみに表示します。</li>
-        </ul>
-      </article>
-
-      <article class="card">
-        <p class="eyebrow">Permissions</p>
-        <h2>必要な権限</h2>
-        <div class="meta">
-          <div class="meta-block">
-            <p class="meta-label">storage</p>
-            <p>学習ルールと設定をブラウザ内に保存するために使います。</p>
-          </div>
-          <div class="meta-block">
-            <p class="meta-label">contextMenus</p>
-            <p>ページ上の右クリックメニューから自動入力と学習を呼び出すために使います。</p>
-          </div>
-          <div class="meta-block">
-            <p class="meta-label">All Sites Access</p>
-            <p>就活サイトごとに DOM 構造が異なるため、ユーザーが訪れた任意の <code>http(s)</code> フォームで同じ機能を提供するために必要です。</p>
-          </div>
+    <!-- 使い方 -->
+    <section class="s-gray">
+      <div class="shell">
+        <p class="eyebrow">使い方</p>
+        <h2>3ステップで完了します。</h2>
+        <p style="max-width: 42rem;">難しい設定は不要です。フォームに入力したあと「学習」するだけで、次回から自動で入力されます。</p>
+        <div class="pill-row">
+          <span class="pill">① フォームに入力する</span>
+          <span class="pill">② 右クリック →「このページの入力内容を学習」</span>
+          <span class="pill">③ 次回は「自動入力を実行」で一括入力</span>
         </div>
-      </article>
+      </div>
     </section>
 
-    <section class="split">
-      <article class="card">
-        <p class="eyebrow">Data Handling</p>
-        <h2>取り扱うデータ</h2>
-        <ul class="stack-list">
-          <li>学習対象は、ユーザーがページ上で入力した通常フィールドの値と、対応するフィールド識別子です。</li>
-          <li>ルール本体は <code>chrome.storage.local</code> に保存されます。</li>
-          <li>軽微な UI 設定のみ <code>chrome.storage.sync</code> を使う場合があります。</li>
-          <li>入力内容を外部サーバーへ送信したり、第三者へ共有したりする処理はありません。</li>
-        </ul>
-      </article>
-
-      <article class="card caution" id="support">
-        <p class="eyebrow">Support</p>
-        <h2>サポート窓口</h2>
-        <p>
-          公開前に、以下のプレースホルダーを実運用のサポートメールアドレスまたは問い合わせフォーム URL に差し替えてください。
-          GitHub Pages の公開 URL を Chrome Web Store のサポート URL として使う想定です。
-        </p>
-        <dl class="contact-list">
-          <div>
-            <dt>サポートメール</dt>
-            <dd><a href="mailto:satellite0712@gmail.com">satellite0712@gmail.com</a></dd>
-          </div>
-          <div>
-            <dt>問い合わせフォーム</dt>
-            <dd><a href="https://github.com/shota-0712/autofill-jp/issues">https://github.com/shota-0712/autofill-jp/issues</a></dd>
-          </div>
-        </dl>
-        <p class="fine-print">
-          返答目安、対応言語、障害連絡先なども、このページに追記しておくと審査とユーザー対応の両方で整合を取りやすくなります。
-        </p>
-      </article>
+    <!-- データについて + 権限について -->
+    <section class="s-white">
+      <div class="shell">
+        <div class="grid">
+          <article class="card">
+            <p class="eyebrow">データについて</p>
+            <h2>入力した内容はChromeの中だけに保存されます。</h2>
+            <ul class="stack-list">
+              <li>保存先はあなたのブラウザの中だけです。外部のサーバーには一切送りません。</li>
+              <li>パスワードや非表示フィールドは学習の対象外です。</li>
+              <li>設定画面からいつでもルールを確認・編集・削除できます。</li>
+              <li>アンインストールすれば保存データもすべて消えます。</li>
+            </ul>
+          </article>
+          <article class="card">
+            <p class="eyebrow">権限について</p>
+            <h2>なぜこの権限が必要なのか。</h2>
+            <div class="meta">
+              <div class="meta-block">
+                <span class="meta-label">ストレージ</span>
+                <p>学習した入力ルールをブラウザ内に保存するために使います。</p>
+              </div>
+              <div class="meta-block">
+                <span class="meta-label">右クリックメニュー</span>
+                <p>「自動入力を実行」「入力内容を学習」を右クリックから呼び出すために使います。</p>
+              </div>
+              <div class="meta-block">
+                <span class="meta-label">すべてのサイトへのアクセス</span>
+                <p>就活サイトや申込フォームはサイトごとに構造が異なるため、どのサイトでも同じように使えるようにするために必要です。</p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
     </section>
+
+    <!-- サポート -->
+    <section class="s-gray">
+      <div class="shell">
+        <div class="split">
+          <article class="card">
+            <p class="eyebrow">広告・トラッキングなし</p>
+            <h2>入力情報は自動入力にしか使いません。</h2>
+            <ul class="stack-list">
+              <li>広告の表示や計測には使いません。</li>
+              <li>データを企業や第三者に販売しません。</li>
+              <li>分析サービスや外部APIへの送信は行いません。</li>
+              <li>あなたの入力内容はあなたのChrome内だけに留まります。</li>
+            </ul>
+          </article>
+          <article class="card" id="support">
+            <p class="eyebrow">Support</p>
+            <h2>サポート</h2>
+            <p>不具合の報告や機能のリクエストは GitHub からお送りください。</p>
+            <dl class="contact-list">
+              <div>
+                <dt>GitHub Issues</dt>
+                <dd><a href="https://github.com/shota-0712/autofill-jp/issues">github.com/shota-0712/autofill-jp/issues</a></dd>
+              </div>
+            </dl>
+          </article>
+        </div>
+      </div>
+    </section>
+
   </main>
 
-  <footer class="shell site-footer">
-    <p>AutoFill JP は、ユーザーが自分で入力したフォーム情報をローカルで再利用するための Chrome 拡張です。</p>
+  <footer class="site-footer">
+    <div class="shell">
+      <p>AutoFill JP — 入力した内容をChromeの中だけで再利用する拡張機能です。</p>
+    </div>
   </footer>
+
 </body>
 </html>
