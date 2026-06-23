@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AutoFill JP",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "フォームに入力した内容を学習し、次回以降の入力を自動で再利用できる Chrome 拡張",
 
   "permissions": [

@@ -33,6 +33,26 @@
     /^(?:_?csrf|csrf_?token|authenticity_?token|nonce|session(?:id)?|requesttoken)$/i,
     /^(?:__viewstate|__eventvalidation|__requestverificationtoken)$/i,
   ];
+  const GENERIC_TEXT_FIELD_NAME_PATTERNS = [
+    /^(?:note|notes|remark|remarks|comment|comments|memo|message|messages)$/i,
+    /^(?:detail|details|description|descriptions|content|contents|body|text)$/i,
+    /^(?:other|others|etc|free|free_?text|free_?answer|textarea)$/i,
+    /(?:備考|メモ|コメント|連絡|自由|その他|補足|詳細|内容|本文|特記|注意|配慮|障害)/,
+  ];
+  const LABEL_NOISE_WORDS = [
+    '入力',
+    '記入',
+    '項目',
+    '欄',
+    '内容',
+    '情報',
+    '必須',
+    '任意',
+    'してください',
+    '下さい',
+    'ありましたら',
+    'ある場合',
+  ];
 
   let uiRoot = null;
   let modalKeyHandler = null;
@@ -614,6 +634,16 @@
     dispatchFormEvents(element, true);
   }
 
+  function setNativeChecked(element, checked) {
+    const descriptor = getPropertyDescriptorFromChain(element, 'checked');
+    if (descriptor && descriptor.set) {
+      descriptor.set.call(element, checked);
+    } else {
+      element.checked = checked;
+    }
+    dispatchFormEvents(element, true);
+  }
+
   function setNativeSelectValue(element, value) {
     const descriptor = getPropertyDescriptorFromChain(element, 'value');
     if (descriptor && descriptor.set) {
@@ -818,6 +848,223 @@
     }
 
     return false;
+  }
+
+  function stripRuleNameSyntax(name) {
+    const text = String(name ?? '').trim();
+    const exactMatch = text.match(/^"(.+)"$/);
+    if (exactMatch) return exactMatch[1];
+
+    const regexMatch = text.match(/^\/(.+)\/([gimsu]*)$/);
+    if (regexMatch) return regexMatch[1];
+
+    return text;
+  }
+
+  function isRegexRuleName(name) {
+    return /^\/(.+)\/([gimsu]*)$/.test(String(name ?? '').trim());
+  }
+
+  function isGenericTextFieldIdentifier(identifier) {
+    const raw = normalizeMatchText(stripRuleNameSyntax(identifier));
+    const loose = normalizeLooseText(stripRuleNameSyntax(identifier));
+    if (!raw && !loose) return false;
+
+    return GENERIC_TEXT_FIELD_NAME_PATTERNS.some((pattern) => pattern.test(raw) || pattern.test(loose));
+  }
+
+  function isTextEntryElement(element) {
+    if (!element) return false;
+    if (element.tagName === 'TEXTAREA') return true;
+    if (element.tagName !== 'INPUT') return false;
+
+    const type = (element.type || 'text').toLowerCase();
+    return ![
+      'button',
+      'checkbox',
+      'color',
+      'file',
+      'hidden',
+      'image',
+      'password',
+      'radio',
+      'range',
+      'reset',
+      'submit',
+    ].includes(type);
+  }
+
+  function normalizeLabelForComparison(value) {
+    let text = normalizeMatchText(value)
+      .replace(/選択肢\s*\d+\s*\/\s*\d+/g, ' ')
+      .replace(/[()[\]{}（）［］｛｝【】「」『』"'`]/g, ' ')
+      .replace(/[|｜/／\\:：;；,，.。・_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    LABEL_NOISE_WORDS.forEach((word) => {
+      text = text.replace(new RegExp(word, 'g'), ' ');
+    });
+
+    return text.replace(/\s+/g, ' ').trim();
+  }
+
+  function addLabelKey(keys, value) {
+    const key = String(value ?? '').replace(/\s+/g, '').trim();
+    if (!key) return;
+
+    keys.add(key);
+
+    const suffixes = ['名称', '氏名', '名', '番号', 'コード', '項目'];
+    suffixes.forEach((suffix) => {
+      if (key.endsWith(suffix) && key.length > suffix.length + 1) {
+        keys.add(key.slice(0, -suffix.length));
+      }
+    });
+  }
+
+  function getLabelMatchKeys(label) {
+    const normalized = normalizeLabelForComparison(label);
+    if (!normalized) return [];
+
+    const keys = new Set();
+    addLabelKey(keys, normalized);
+
+    normalized.split(/\s+/).forEach((part) => {
+      if (part.length >= 2) {
+        addLabelKey(keys, part);
+      }
+    });
+
+    return Array.from(keys).filter((key) => key.length > 0);
+  }
+
+  function labelsAreCompatible(ruleLabel, elementLabel) {
+    const ruleKeys = getLabelMatchKeys(ruleLabel);
+    const elementKeys = getLabelMatchKeys(elementLabel);
+
+    if (ruleKeys.length === 0 || elementKeys.length === 0) return null;
+
+    return ruleKeys.some((ruleKey) => {
+      return elementKeys.some((elementKey) => {
+        if (ruleKey === elementKey) return true;
+        const minLength = Math.min(ruleKey.length, elementKey.length);
+        return minLength >= 3 && (ruleKey.includes(elementKey) || elementKey.includes(ruleKey));
+      });
+    });
+  }
+
+  function fieldContextMatchesRule(rule, element) {
+    if (!isTextEntryElement(element)) return true;
+
+    const ruleLabel = String(rule?.label ?? '').trim();
+    if (!ruleLabel) return true;
+
+    const elementLabel = getElementLabel(element);
+    const usesGenericIdentifier =
+      element.tagName === 'TEXTAREA' ||
+      isRegexRuleName(rule?.name) ||
+      isGenericTextFieldIdentifier(rule?.name) ||
+      getRuleMatchCandidates(element).some((candidate) => isGenericTextFieldIdentifier(candidate));
+
+    const labelCompatibility = labelsAreCompatible(ruleLabel, elementLabel);
+    if (labelCompatibility === true) return true;
+    if (labelCompatibility === false) return !usesGenericIdentifier;
+
+    return !usesGenericIdentifier;
+  }
+
+  function getNativeRadioGroup(element) {
+    if (element?.type !== 'radio') return [];
+    if (!element.name) return [element];
+
+    try {
+      const group = Array.from(document.querySelectorAll(`input[type="radio"][name="${CSS.escape(element.name)}"]`));
+      return group.filter((candidate) => candidate.form === element.form);
+    } catch (error) {
+      return [element];
+    }
+  }
+
+  function getNativeCheckboxGroup(element) {
+    if (element?.type !== 'checkbox') return [];
+    if (!element.name) return [element];
+
+    try {
+      const group = Array.from(document.querySelectorAll(`input[type="checkbox"][name="${CSS.escape(element.name)}"]`));
+      return group.filter((candidate) => candidate.form === element.form);
+    } catch (error) {
+      return [element];
+    }
+  }
+
+  function getNativeChoiceGroup(element) {
+    if (element?.type === 'radio') return getNativeRadioGroup(element);
+    if (element?.type === 'checkbox') return getNativeCheckboxGroup(element);
+    return [];
+  }
+
+  function choiceGroupHasCheckedValue(element) {
+    return getNativeChoiceGroup(element).some((candidate) => candidate.checked);
+  }
+
+  function getInitiallyCheckedChoiceSet(elements) {
+    const checkedSet = new WeakSet();
+
+    elements.forEach((element) => {
+      if (element.type !== 'radio' && element.type !== 'checkbox') return;
+      if (!choiceGroupHasCheckedValue(element)) return;
+
+      getNativeChoiceGroup(element).forEach((candidate) => {
+        checkedSet.add(candidate);
+      });
+    });
+
+    return checkedSet;
+  }
+
+  function getRadioChoiceIndex(element) {
+    const group = getNativeRadioGroup(element);
+    return group.indexOf(element);
+  }
+
+  function getRadioChoiceCount(element) {
+    return getNativeRadioGroup(element).length;
+  }
+
+  function getRuleChoiceIndex(rule) {
+    const index = Number(rule?.choiceIndex);
+    return Number.isInteger(index) && index >= 0 ? index : null;
+  }
+
+  function hasAmbiguousRadioValue(rule, element) {
+    const group = getNativeRadioGroup(element);
+    if (group.length <= 1) return false;
+
+    const targetValue = String(rule?.value ?? '').trim();
+    if (!targetValue || normalizeMatchText(targetValue) === 'on') return true;
+
+    let matchingValueCount = 0;
+    for (const candidate of group) {
+      if (valueEquals(targetValue, candidate.value || 'on')) {
+        matchingValueCount++;
+      }
+    }
+    return matchingValueCount > 1;
+  }
+
+  function shouldApplyRadioByChoiceIndex(rule, element) {
+    return getRuleChoiceIndex(rule) !== null && hasAmbiguousRadioValue(rule, element);
+  }
+
+  function radioChoiceIndexMatches(rule, element) {
+    const targetIndex = getRuleChoiceIndex(rule);
+    if (targetIndex === null) return false;
+
+    const group = getNativeRadioGroup(element);
+    if (targetIndex >= group.length) return false;
+
+    return group[targetIndex] === element;
   }
 
   function getRuleMatchCandidates(element) {
@@ -1197,6 +1444,20 @@
     element.click();
   }
 
+  function activateChoiceElement(element) {
+    try {
+      clickElement(element);
+    } catch (error) {
+      element.click?.();
+    }
+
+    if (!element.checked) {
+      setNativeChecked(element, true);
+    } else {
+      dispatchFormEvents(element, true);
+    }
+  }
+
   function isAffirmativeCheckboxValue(value) {
     return ['1', 'true', 'yes', 'on', 'checked', 'check', 'はい', 'あり'].includes(normalizeMatchText(value));
   }
@@ -1268,9 +1529,19 @@
     }
 
     if (type === 'radio') {
+      if (shouldApplyRadioByChoiceIndex(rule, element)) {
+        if (!radioChoiceIndexMatches(rule, element)) {
+          return false;
+        }
+        activateChoiceElement(element);
+        return true;
+      }
+
       if (valueEquals(value, element.value)) {
         if (!element.checked) {
-          element.click();
+          activateChoiceElement(element);
+        } else {
+          dispatchFormEvents(element, true);
         }
         return true;
       }
@@ -1280,7 +1551,9 @@
     if (type === 'checkbox') {
       if (valueEquals(value, element.value) || (isSingleCheckboxInGroup(element) && isAffirmativeCheckboxValue(value))) {
         if (!element.checked) {
-          element.click();
+          activateChoiceElement(element);
+        } else {
+          dispatchFormEvents(element, true);
         }
         return true;
       }
@@ -1306,6 +1579,7 @@
       const activeRules = sortRulesForAutofill(rules.filter((rule) => siteRuleMatchesCurrentPage(rule.site)));
 
       const elements = getCandidateElements();
+      const initiallyCheckedChoices = getInitiallyCheckedChoiceSet(elements);
       let filled = 0;
 
       for (const element of elements) {
@@ -1313,7 +1587,9 @@
         if (element.type === 'password') continue;
         if (element.type === 'hidden') continue;
 
-        if (element.tagName === 'SELECT') {
+        if (element.type === 'radio' || element.type === 'checkbox') {
+          if (initiallyCheckedChoices.has(element)) continue;
+        } else if (element.tagName === 'SELECT') {
           if (hasMeaningfulValue(element)) continue;
         } else if (element.type !== 'radio' && element.type !== 'checkbox') {
           if (hasMeaningfulValue(element)) continue;
@@ -1322,6 +1598,7 @@
         for (const rule of activeRules) {
           if (!ruleMatches(rule, element)) continue;
           if (!ruleTypeMatchesElement(rule, element)) continue;
+          if (!fieldContextMatchesRule(rule, element)) continue;
           if (await applyRule(rule, element)) {
             filled++;
             break;
@@ -1363,7 +1640,7 @@
     }
 
     if (element.type === 'radio' || element.type === 'checkbox') {
-      return element.checked ? (element.value || '1') : null;
+      return element.checked ? (element.value || 'on') : null;
     }
 
     if (typeof element.value === 'string' && element.value !== '' && !isPlaceholderLikeValue(element.value)) {
@@ -1441,7 +1718,13 @@
       if (value == null || value === '') continue;
 
       const type = getElementRuleType(element);
-      const label = getElementLabel(element);
+      const choiceIndex = getRadioChoiceIndex(element);
+      const choiceCount = getRadioChoiceCount(element);
+      const choiceSuffix = element.type === 'radio' && choiceIndex >= 0 && choiceCount > 1
+        ? `選択肢 ${choiceIndex + 1}/${choiceCount}`
+        : '';
+      const rawLabel = getElementLabel(element);
+      const label = [rawLabel, choiceSuffix].filter(Boolean).join(' / ').slice(0, 80);
       if (!shouldCaptureField(element, fieldIdentifier, value, type, label)) continue;
 
       const dedupeKey = [
@@ -1457,6 +1740,8 @@
         value,
         type,
         label,
+        choiceIndex: choiceSuffix ? choiceIndex : undefined,
+        choiceCount: choiceSuffix ? choiceCount : undefined,
       });
     }
 
@@ -1861,6 +2146,7 @@
           const idx = Number(checkbox.dataset.idx);
           if (Number.isNaN(idx)) return null;
 
+          const capturedItem = captured[idx] || {};
           const typeInput = list.querySelector(`.ajp-type[data-idx="${idx}"]`);
           const nameInput = list.querySelector(`.ajp-name[data-idx="${idx}"]`);
           const valueInput = list.querySelector(`.ajp-value[data-idx="${idx}"]`);
@@ -1876,6 +2162,8 @@
             name,
             value: valueInput?.value ?? '',
             label: labelInput?.value.trim() || '',
+            choiceIndex: Number.isInteger(capturedItem.choiceIndex) ? capturedItem.choiceIndex : undefined,
+            choiceCount: Number.isInteger(capturedItem.choiceCount) ? capturedItem.choiceCount : undefined,
           };
         })
         .filter(Boolean);
@@ -1892,8 +2180,16 @@
       let addedCount = 0;
       let updatedCount = 0;
 
+      const getChoiceMetadata = (item) => {
+        const metadata = {};
+        if (Number.isInteger(item.choiceIndex)) metadata.choiceIndex = item.choiceIndex;
+        if (Number.isInteger(item.choiceCount)) metadata.choiceCount = item.choiceCount;
+        return metadata;
+      };
+
       selectedItems.forEach((item) => {
         const { idx, type, name, value, label } = item;
+        const choiceMetadata = getChoiceMetadata(item);
 
         const existingIdx = rules.findIndex((rule) => {
           return (
@@ -1909,6 +2205,7 @@
             value,
             label: label || rules[existingIdx].label || '',
             site,
+            ...choiceMetadata,
           };
           updatedCount++;
           return;
@@ -1921,6 +2218,7 @@
           value,
           label,
           site,
+          ...choiceMetadata,
           createdAt: new Date().toISOString(),
         });
         addedCount++;
